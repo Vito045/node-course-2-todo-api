@@ -5,6 +5,7 @@ const {ObjectID} = require('mongodb');
 const {app} = require('./../server')
 const {Todo} = require('./../models/todo');
 
+const port = process.end.PORT || 3000;
 
 var todos = [{
     _id: new ObjectID(),

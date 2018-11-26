@@ -7,8 +7,7 @@ var Todo = mongoose.model('Todo', {
         minlength: 1
     },
     completed: {
-        type: Boolean,
-        required: true
+        type: Boolean
     },
     completerAt: {
         type: Number

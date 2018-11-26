@@ -5,7 +5,6 @@ const {ObjectID} = require('mongodb');
 const {app} = require('./../server')
 const {Todo} = require('./../models/todo');
 
-const port = process.end.PORT || 3000;
 
 var todos = [{
     _id: new ObjectID(),
@@ -15,10 +14,17 @@ var todos = [{
     text: 'Second test todo'
 }];
 
+// beforeEach((done) => {
+//     Todo.remove({}).then(() => {
+//         return Todo.insertMany(todos);
+//     }).then(() => done());
+// });
+
 beforeEach((done) => {
     Todo.remove({}).then(() => {
-        return Todo.insertMany(todos);
-    }).then(() => done());
+        Todo.insertMany(todos);
+        done()
+    });
 });
 
 describe('POST /todos', () => {
@@ -33,9 +39,7 @@ describe('POST /todos', () => {
                 expect(res.body.text).toBe(text);
             })
             .end((err, res) => {
-                if(err){
-                    return done(err);
-                }
+                if(err) return done(err);        
 
                 Todo.find({text}).then((todos) => {
                     expect(todos.length).toBe(1);
@@ -95,10 +99,47 @@ describe('GET /todos/:id', () => {
             .end(done)
     });
 
-    it('should return 404 for non-objects ids', (done) => {
+    it('should return 400 for non-objects ids', (done) => {
         request(app)
             .get(`/todos/123abc`)
             .expect(404)
             .end(done)
+    });
+});
+
+describe('DELETE /todos/:id', () => {
+    it('should remove todo', (done) => {
+        var hexId = todos[1]._id.toHexString();
+
+        request(app)
+            .delete(`/todos/${hexId}`)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body._id).toBe(hexId)
+            })
+            .end((err, res) => {
+                if (err) return done(err)
+
+                Todo.findById(hexId).then((todo) => {
+                    expect(todo).toNotExist();
+                    done()
+                }).catch((e) => done(e))
+            });     
+    });
+
+    it('should return 404 if todo not found', (done) => {
+        var hexId = new ObjectID().toHexString();
+
+        request(app)
+            .delete(`/todos/${hexId}`)
+            .expect(404)
+            .end(done)
+    });
+
+    it('should return 404 if oject id is invalid', (done) => {
+        request(app)
+            .delete(`/todos/123abc`)
+            .expect(400)
+            .end(done)
     })
-})
+});
